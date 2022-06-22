@@ -1,0 +1,19 @@
+{
+  "name": "android-controller-wrapper",
+  "version": "1.0.0",
+  "description": "android device controller wrapper",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "android",
+    "controller"
+  ],
+  "author": "yuanliwei",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint-plugin-import": "^2.26.0"
+  }
+}
