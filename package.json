@@ -1,6 +1,6 @@
 {
   "name": "android-controller-wrapper",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "android device controller wrapper",
   "main": "index.js",
   "type": "module",

@@ -22,6 +22,12 @@ import fetch from 'node-fetch'
  * @property {ViewTree[]} childrens childrens
  */
 
+/**
+ * @callback matchCallback
+ * @param {ViewTree} ViewTree
+ * @returns {boolean}
+ */
+
 
 /**
  * @typedef {Object} Options
@@ -293,7 +299,8 @@ class Controller {
      * wait a change on mobile screen
      */
     async waitChange() {
-        while ((await this.exec('getisviewchange')).data == 'false') {
+        let count = 0
+        while ((await this.exec('getisviewchange')).data == 'false' && count++ < 50) {
             await this.sleep(10)
         }
     }
@@ -338,10 +345,43 @@ class Controller {
     }
 
     /**
-     * @callback matchCallback
-     * @param {ViewTree} ViewTree
-     * @returns {boolean}
+     * wait until screen includes the view
+     *
+     * @param {matchCallback} match
+     * @returns {Promise<ViewTree>}
      */
+    async waitViewForMatch(match) {
+        let status = true
+        while (status) {
+            let tree = await this.getVisibleViewTree()
+            let view = this.findViewInTree(tree, match)
+            if (view) {
+                return view
+            }
+            await this.waitChange()
+        }
+    }
+
+    /**
+     * find view in viewtree with match
+     *
+     * @param {ViewTree} tree
+     * @param {matchCallback} match
+     * 
+     * @returns {ViewTree}
+     */
+    findViewsInTree(tree, match) {
+        let objs = []
+        let loop = (child) => {
+            if (match(child)) {
+                objs.push(child)
+            } else {
+                child.childrens.forEach(loop)
+            }
+        }
+        loop(tree)
+        return objs
+    }
 
     /**
      * find view in viewtree with match
@@ -352,16 +392,7 @@ class Controller {
      * @returns {ViewTree}
      */
     findViewInTree(tree, match) {
-        let obj
-        let loop = (child) => {
-            if (!obj && match(child)) {
-                obj = child
-            } else {
-                child.childrens.forEach(loop)
-            }
-        }
-        loop(tree)
-        return obj
+        return this.findViewsInTree(tree, match)[0]
     }
 
     /**
