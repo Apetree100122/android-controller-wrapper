@@ -42,9 +42,10 @@ class Controller {
         this.sequenceId = 123
         this.queryCallbackMap = {}
 
+        /** @type{Options} */
         this.options = Object.assign({
             type: 'repl',
-            command_type: 'text',
+            command_type: 'json',
             name: 'monkey-repl',
             port: 5678,
             allow_ip_address: '*',
@@ -100,8 +101,8 @@ class Controller {
                     }
                 }
             } catch (error) {
-                // console.log(chunk);
-                console.error(error)
+                // console.log(chunk)
+                // console.error(error)
             }
         })
 
@@ -127,7 +128,7 @@ class Controller {
     /**
      * @param {number} timeout sleep timeout millisecond
      */
-    sleep(timeout) { return new Promise((resolve) => setTimeout(resolve, timeout)) }
+    async sleep(timeout) { return new Promise((resolve) => setTimeout(resolve, timeout)) }
 
 
     /**
@@ -154,6 +155,8 @@ class Controller {
      * @param {Number} y 
      */
     async tap(x, y) {
+        x = Math.round(x)
+        y = Math.round(y)
         return this.exec(`tap ${x} ${y}`)
     }
 
@@ -162,6 +165,8 @@ class Controller {
      * @param {Number} y 
      */
     async touchDown(x, y) {
+        x = Math.round(x)
+        y = Math.round(y)
         return this.exec(`touch down ${x} ${y}`)
     }
 
@@ -170,6 +175,8 @@ class Controller {
      * @param {Number} y 
      */
     async touchMove(x, y) {
+        x = Math.round(x)
+        y = Math.round(y)
         return this.exec(`touch move ${x} ${y}`)
     }
 
@@ -178,6 +185,8 @@ class Controller {
      * @param {Number} y 
      */
     async touchUp(x, y) {
+        x = Math.round(x)
+        y = Math.round(y)
         return this.exec(`touch up ${x} ${y}`)
     }
 
@@ -192,6 +201,12 @@ class Controller {
      */
     async slide(x1, y1, x2, y2, time, step) {
         // slide x1 y1 x2 y2 time step
+        x1 = Math.round(x1)
+        y1 = Math.round(y1)
+        x2 = Math.round(x2)
+        y2 = Math.round(y2)
+        time = Math.round(time)
+        step = Math.round(step)
         return this.exec(`slide ${x1} ${y1} ${x2} ${y2} ${time} ${step}`)
     }
 
