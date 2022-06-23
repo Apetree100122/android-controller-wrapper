@@ -1,4 +1,5 @@
 import { spawn, execSync } from 'child_process'
+import fetch from 'node-fetch'
 
 /**
  * @typedef {Object} ViewTree
@@ -28,7 +29,8 @@ import { spawn, execSync } from 'child_process'
  * @property {'text'|'json'} command_type      default : text
  * @property {string} name                     default : monkey-repl
  * @property {number} port                     default : 5678
- * @property {string} allow_ip_address         default : *
+ * @property {number} ip_address               default : ''
+ * @property {string} allow_ip_address         default : 192.168.*
  * @property {boolean} query_view              default : true
  * @property {boolean} activity_controller     default : true
  */
@@ -40,7 +42,6 @@ class Controller {
      */
     constructor(options) {
         this.sequenceId = 123
-        this.queryCallbackMap = {}
 
         /** @type{Options} */
         this.options = Object.assign({
@@ -48,63 +49,77 @@ class Controller {
             command_type: 'json',
             name: 'monkey-repl',
             port: 5678,
-            allow_ip_address: '*',
+            ip_address: '',
+            allow_ip_address: '192.168.*',
             query_view: true,
             activity_controller: true,
         }, options)
+
+
+        this.execImpl = async (command) => { console.log(command) }
     }
 
     async connect() {
-        let devicesStr = execSync(`adb devices`).toString()
-        let devices = devicesStr.split('\n').map(o => o.trim()).filter(o => o)
-        devices = devices.map(o => o.split(/\s+/)).filter(o => o.length == 2).map(o => o[0])
-        console.log(devices)
-
         const { type, command_type, name, port, allow_ip_address, query_view, activity_controller } = this.options
+        if (type == 'repl') {
+            let devicesStr = execSync(`adb devices`).toString()
+            let devices = devicesStr.split('\n').map(o => o.trim()).filter(o => o)
+            devices = devices.map(o => o.split(/\s+/)).filter(o => o.length == 2).map(o => o[0])
+            console.log(devices)
+            if (!devices.length) throw Error('没有连接的手机')
+            let device = devices.shift()
+            const queryCallbackMap = {}
+            const shell = spawn(`adb`, [`-s`, `${device}`, `shell`])
+            shell.stderr.setEncoding('utf-8')
+            shell.stdout.setEncoding('utf-8')
+            shell.stderr.on('data', (chunk) => { console.log('err', chunk) })
+            // shell.stdin.on('error', (chunk) => { console.error('error', chunk) })
+            // shell.stdout.on('error', (chunk) => { console.error('error', chunk) })
+            // shell.stderr.on('error', (chunk) => { console.error('error', chunk) })
+            // shell.stdin.on('close', (chunk) => { console.error('close', chunk) })
+            // shell.stdout.on('close', (chunk) => { console.error('close', chunk) })
+            // shell.stderr.on('close', (chunk) => { console.error('close', chunk) })
 
-        if (!devices.length) throw Error('没有连接的手机')
-        let device = devices.shift()
+            shell.stdin.write(`export CLASSPATH=/data/local/tmp/monkey_repl.jar\n`)
+            shell.stdin.write(`exec app_process /system/bin com.android.commands.monkey.Monkey --type ${type} --command_type ${command_type} --name ${name} --port ${port} --allow_ip_address ${allow_ip_address} --query_view ${query_view} --activity_controller ${activity_controller}\n`)
 
-        const shell = spawn(`adb`, [`-s`, `${device}`, `shell`])
-        this.shell = shell
-        shell.stderr.setEncoding('utf-8')
-        shell.stdout.setEncoding('utf-8')
-        shell.stderr.on('data', (chunk) => { console.log('err', chunk) })
-        shell.stdin.on('error', (chunk) => { console.error('error', chunk) })
-        shell.stdout.on('error', (chunk) => { console.error('error', chunk) })
-        shell.stderr.on('error', (chunk) => { console.error('error', chunk) })
-        shell.stdin.on('close', (chunk) => { console.error('close', chunk) })
-        shell.stdout.on('close', (chunk) => { console.error('close', chunk) })
-        shell.stderr.on('close', (chunk) => { console.error('close', chunk) })
-
-        shell.stdin.write(`export CLASSPATH=/data/local/tmp/monkey_repl.jar\n`)
-        shell.stdin.write(`exec app_process /system/bin com.android.commands.monkey.Monkey --type ${type} --command_type ${command_type} --name ${name} --port ${port} --allow_ip_address ${allow_ip_address} --query_view ${query_view} --activity_controller ${activity_controller}\n`)
-
-        let chunks = []
-        shell.stdout.on('data', (chunk) => {
-            // console.log('on data chunk:', chunk.length)
-            // console.log('on data chunk:', '|' + chunk + '|')
-            if (this.queryCallbackMap.length == 0) return
-            chunk = chunk.split('\n').map(o => o.trim()).filter(o => chunks.length > 0 || o.startsWith('{'))[0]
-            if (!chunk) return
-            if (chunks.length > 0 || chunk.startsWith("{")) {
-                chunks.push(chunk)
-            }
-            try {
-                let o = JSON.parse(chunks.join(''))
-                chunks = []
-                if (o.id) {
-                    let promiseResolve = this.queryCallbackMap[o.id]
-                    if (promiseResolve) {
-                        promiseResolve(o)
-                        delete this.queryCallbackMap[o.id]
-                    }
+            let chunks = []
+            shell.stdout.on('data', (chunk) => {
+                // console.log('on data chunk:', chunk.length)
+                // console.log('on data chunk:', '|' + chunk + '|')
+                if (queryCallbackMap.length == 0) return
+                chunk = chunk.split('\n').map(o => o.trim()).filter(o => chunks.length > 0 || o.startsWith('{'))[0]
+                if (!chunk) return
+                if (chunks.length > 0 || chunk.startsWith("{")) {
+                    chunks.push(chunk)
                 }
-            } catch (error) {
-                // console.log(chunk)
-                // console.error(error)
-            }
-        })
+                try {
+                    let o = JSON.parse(chunks.join(''))
+                    chunks = []
+                    if (o.id) {
+                        let promiseResolve = queryCallbackMap[o.id]
+                        if (promiseResolve) {
+                            promiseResolve(o)
+                            delete queryCallbackMap[o.id]
+                        }
+                    }
+                } catch (error) {
+                    // console.log(chunk)
+                    // console.error(error)
+                }
+            })
+
+            this.execImpl = async (command) => new Promise((resolve) => {
+                // console.log(command)
+                queryCallbackMap[command.id] = resolve
+                shell.stdin.write(JSON.stringify(command) + '\n')
+            })
+        }
+
+        if (type == 'network') {
+            // curl http://ip_address:5678 -d help
+            this.execImpl = async (command) => await (await (fetch(`http://${this.options.ip_address}:${this.options.port}`, { method: 'POST', body: JSON.stringify(command) }))).json()
+        }
 
         let result = await this.exec(`echo test`)
 
@@ -112,17 +127,12 @@ class Controller {
     }
 
     /**
-     * 
      * @param {String} command 
      * @returns {Promise<{id: Number,isSuccess:boolean,data:String}>}
      */
     async exec(command) {
         let id = this.sequenceId++
-        return new Promise((resolve) => {
-            this.queryCallbackMap[id] = resolve
-            // console.log({ id, data: command })
-            this.shell.stdin.write(JSON.stringify({ id, data: command }) + '\n')
-        })
+        return this.execImpl({ id, data: command })
     }
 
     /**

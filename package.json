@@ -1,6 +1,6 @@
 {
   "name": "android-controller-wrapper",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "android device controller wrapper",
   "main": "index.js",
   "type": "module",
@@ -23,5 +23,8 @@
   "license": "ISC",
   "devDependencies": {
     "eslint-plugin-import": "^2.26.0"
+  },
+  "dependencies": {
+    "node-fetch": "^3.2.6"
   }
 }

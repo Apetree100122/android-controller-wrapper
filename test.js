@@ -1,7 +1,12 @@
 import Controller from './index.js'
 
 async function start() {
-    let controller = new Controller({})
+    let controller = new Controller({
+        // activity_controller: false,
+        // query_view: false,
+        // type: 'network',
+        // ip_address:'192.168.40.86'
+    })
     await controller.connect()
 
     await controller.slide(200, 500, 1000, 600, 1000, 100)
