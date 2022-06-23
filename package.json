@@ -1,6 +1,6 @@
 {
   "name": "android-controller-wrapper",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "android device controller wrapper",
   "main": "index.js",
   "type": "module",
@@ -11,6 +11,14 @@
     "android",
     "controller"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuanliwei/android-controller-wrapper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuanliwei/android-controller-wrapper/issues"
+  },
+  "homepage": "https://github.com/yuanliwei/android-controller-wrapper#readme",
   "author": "yuanliwei",
   "license": "ISC",
   "devDependencies": {

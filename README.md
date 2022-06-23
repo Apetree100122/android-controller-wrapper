@@ -5,10 +5,11 @@ controller https://github.com/yuanliwei/Monkey-Repl/releases
 
 **demo**
 
-<video src="demo/show.mp4" width="300px" autoplay loop controls></video>
+![demo](demo/show.png)
 
 
 **usage**
+
 ```sh
 # download monkey_repl.jar from https://github.com/yuanliwei/Monkey-Repl/releases
 adb push monkey_repl.jar /data/local/tmp/monkey_repl.jar
@@ -17,7 +18,7 @@ adb push monkey_repl.jar /data/local/tmp/monkey_repl.jar
 **code**
 
 ```js
-import Controller from './index.js'
+import Controller from "android-controller-wrapper"
 
 async function start() {
     let controller = new Controller({})
