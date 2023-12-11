@@ -31,14 +31,14 @@ import fetch from 'node-fetch'
 
 /**
  * @typedef {Object} Options
- * @property {'repl'|'network'} type           default : repl
- * @property {'text'|'json'} command_type      default : text
- * @property {string} name                     default : monkey-repl
- * @property {number} port                     default : 5678
- * @property {number} ip_address               default : ''
- * @property {string} allow_ip_address         default : 192.168.*
- * @property {boolean} query_view              default : true
- * @property {boolean} activity_controller     default : true
+ * @property {'repl'|'network'} [type]           default : repl
+ * @property {'text'|'json'} [command_type]      default : text
+ * @property {string} [name]                     default : monkey-repl
+ * @property {number} [port]                     default : 5678
+ * @property {string} [ip_address]               default : ''
+ * @property {string} [allow_ip_address]         default : 192.168.*
+ * @property {boolean} [query_view]              default : true
+ * @property {boolean} [activity_controller]     default : true
  */
 
 class Controller {
